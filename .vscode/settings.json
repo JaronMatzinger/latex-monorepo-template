@@ -1,0 +1,19 @@
+{
+  "latex-workshop.latex.outDir": "%DIR%/../PDF",
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.latex.pdfWatch.delay": 500,
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": [
+        "-pdf",
+        "-interaction=nonstopmode",
+        "-synctex=1",
+        "-output-directory=%DIR%/../PDF",
+        "%DOC%"
+      ]
+    }
+  ]
+}
