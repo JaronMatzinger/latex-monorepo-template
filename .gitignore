@@ -51,9 +51,10 @@ Thumbs.db
 .ruff_cache/
 .hypothesis/
 
-# Agents
-.pi/
-
 # LaTeX build output
 report/PDF/*
 !report/PDF/.gitkeep
+
+# Local dev
+# dev/
+# AGENTS.md

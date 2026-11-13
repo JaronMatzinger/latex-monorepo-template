@@ -1,0 +1,11 @@
+[project]
+name = "latex-monorepo-template"
+version = "0.1.0"
+description = "Reproducible LaTeX report and research monorepo template with an agent ticket workflow"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]

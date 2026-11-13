@@ -2,10 +2,15 @@
 
 A reproducible Dev Container setup for LaTeX reports and research monoliths.
 
+## Prerequisites
+- Install [uv](https://docs.astral.sh/uv/) (for example `brew install uv` on macOS, or `curl -LsSf https://astral.sh/uv/install.sh | sh`).
+- From the repository root, run `uv sync` to create `.venv` with the dev dependencies (pytest). Helper scripts such as `dev/scripts/review_ticket.py` declare their own dependencies inline and are executed via `uv run`.
+
 ## Directory Structure
 - `.devcontainer/`: Container toolchain (native Apple Silicon TeX Live)
 - `.vscode/`: Workspace settings configuring LaTeX Workshop (`settings.json`)
 - `compile.sh`: Host runner script invoking the container toolchain
+- `pyproject.toml` / `uv.lock`: uv project definition and lockfile (dev dependencies such as pytest, see Prerequisites)
 - `report/document/`: LaTeX source files (`acronyms.tex`, `main.tex`, `references.bib`, `title_page.tex`)
 - `dev/`: Local agent working directory (gitignored in derived projects, see step 3)
   - `dev/tickets/`: Active tickets (`codes/` for engineering, `docs/` for report work)
@@ -21,10 +26,11 @@ Fork this repository to your own GitHub account.
 ## 2. Use This Template
 Click **"Use this template"** -> **"Create a new repository"** and follow the setup prompts to scaffold your project from this template.
 
-## 3. Add `dev/` to `.gitignore`
-In your new project, add `dev/` to `.gitignore` so that tickets, review logs, and local env files stay out of version control:
+## 3. Uncomment `dev/` and `AGENTS.md` in `.gitignore`
+In your new project, uncomment the two lines at the bottom of `.gitignore` so that tickets, review logs, local env files, and the agent harness file stay out of version control:
 ```gitignore
 dev/
+AGENTS.md
 ```
 
 ## 4. Writing Session
