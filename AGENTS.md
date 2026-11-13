@@ -1,11 +1,13 @@
 # Agent Harness: [Project Name]
 
 ## 1. Active State & Current Handover
-- Active Mode: [Coding | Writing]
-- Current Ticket: [TICKET-ID] (`path/to/target/file`)
-- Immediate Next Action: [Precise task to start immediately, e.g. Implement module or draft section]
-- Last Completed: [Previous ticket ID, brief summary of verified deliverables]
-- Immediate Verification: [CLI command to run after making changes, e.g. pytest or latexmk]
+- Active Mode: Coding
+- Current Ticket: DEV-01 (`README.md`, `AGENTS.md`, `dev/scripts/review_ticket.py`)
+- Immediate Next Action: Document the `dev/` layout in README.md and AGENTS.md; fix path references in `dev/scripts/review_ticket.py`
+- Last Completed: (none recorded yet)
+- Immediate Verification: `uv run dev/scripts/review_ticket.py <ticket-id>` at the end of each ticket
+- Ticket Location: `dev/tickets/codes/` (engineering) and `dev/tickets/docs/` (report), created from `dev/templates/TICKET-template.md`
+- Project Overview: `dev/PROJECT_OVERVIEW.md`
 
 ## 2. Hard Invariants & Guardrails
 ### Domain & Methodological Invariants
@@ -22,11 +24,13 @@
 ### Tooling & Verification Protocols
 - Code Suite: `uv run pytest tests/ -v -W error` (All tests green, zero warnings).
 - Report Compilation: `latexmk -outdir=PDF -pdf main.tex` (Target output in `PDF/`, exit code 0, 0 undefined refs).
+- Ticket Review: `uv run dev/scripts/review_ticket.py <ticket-id-or-path>` from the repo root at the end of every ticket (requires `MISTRAL_API_KEY` in `.env`, see `.env.example`; writes `<ticket>.review.md` next to the ticket and, on `[VERDICT: FAIL]`, a `<ticket>_remediation.md`).
 - Definition of Done (DoD):
   1. Automated checks pass cleanly.
   2. Invariants in this file remain intact.
   3. Git commit follows conventional commit syntax (`feat:`, `fix:`, `chore:`, `doc:`).
   4. Section 1 of this file updated prior to ending the turn.
+  5. Ticket review executed via `uv run dev/scripts/review_ticket.py <ticket-id>` with `[VERDICT: PASS]` (or the generated remediation ticket completed).
 
 ## 3. Dual-Track Roadmap
 
