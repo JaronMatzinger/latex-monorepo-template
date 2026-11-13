@@ -4,7 +4,6 @@ A reproducible Dev Container setup for LaTeX reports and research monoliths.
 
 ## Prerequisites
 - Install [uv](https://docs.astral.sh/uv/) (for example `brew install uv` on macOS, or `curl -LsSf https://astral.sh/uv/install.sh | sh`).
-- From the repository root, run `uv sync` to create `.venv` with the dev dependencies (pytest). Helper scripts such as `dev/scripts/review_ticket.py` declare their own dependencies inline and are executed via `uv run`.
 
 ## Directory Structure
 - `.devcontainer/`: Container toolchain (native Apple Silicon TeX Live)
@@ -26,12 +25,23 @@ Fork this repository to your own GitHub account.
 ## 2. Use This Template
 Click **"Use this template"** -> **"Create a new repository"** and follow the setup prompts to scaffold your project from this template.
 
-## 3. Uncomment `dev/` and `AGENTS.md` in `.gitignore`
-In your new project, uncomment the two lines at the bottom of `.gitignore` so that tickets, review logs, local env files, and the agent harness file stay out of version control:
-```gitignore
-dev/
-AGENTS.md
-```
+## 3. Initialize the New Repository
+1. Set the project name: replace `[Project Name]` in `AGENTS.md`, the title of this README, and the `name` in `pyproject.toml`.
+2. Fill in the bracketed placeholders in `AGENTS.md` (domain invariants, roadmap) and write `dev/PROJECT_OVERVIEW.md`.
+3. In the shipped `.gitignore`, uncomment the `dev/` and `AGENTS.md` lines under `# Local dev` so the agent harness, tickets, and review logs stay out of version control (`.env` is already ignored; the files themselves remain on disk):
+   ```gitignore
+   dev/
+   AGENTS.md
+   ```
+4. Copy `.env.example` to `.env` at the repo root and fill in your Mistral API key; the ticket review script requires it:
+   ```bash
+   cp .env.example .env
+   ```
+5. Sync the Python environment (pytest is already a dev dependency, so the test suite runs out of the box):
+   ```bash
+   uv sync
+   ```
+   `uv run` also syncs automatically on first use, e.g. `uv run pytest tests/ -v -W error`.
 
 ## 4. Writing Session
 
