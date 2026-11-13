@@ -41,6 +41,7 @@ def resolve_ticket_path(arg: str) -> Path:
     search_dirs = [
         Path("dev/tickets/codes"),
         Path("dev/tickets/docs"),
+        Path("dev/literature"),
         Path("dev/tickets"),
     ]
     for d in search_dirs:
