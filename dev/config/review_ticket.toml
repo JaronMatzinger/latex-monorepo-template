@@ -1,0 +1,61 @@
+# Configuration for dev/scripts/review_ticket.py
+#
+# The prompt template uses Python str.format placeholders:
+#   {role_description} {invariants_context} {ticket_path} {ticket_content}
+#   {verification_section} {diff_payload} {review_criteria}
+# Literal braces in the template must be doubled ({{ }}).
+#
+# Override this file's location with the REVIEW_TICKET_CONFIG env var.
+
+[model]
+primary = "zai-glm-5-3"
+fallback = "mistral-large-4"
+temperature = 0.1
+timeout_ms = 300000
+
+[limits]
+diff_char_limit = 50000
+
+[prompts]
+template = '''
+You are {role_description} evaluating an implementation artifact.
+
+{invariants_context}
+
+### Target Ticket ({ticket_path})
+{ticket_content}
+
+### Verification Execution
+{verification_section}
+
+### Git Diff
+```diff
+{diff_payload}
+```
+
+### Review Criteria:
+{review_criteria}
+'''
+
+[prompts.docs]
+role_description = "an expert quantitative econometrician, technical editor, and thesis supervisor"
+review_criteria = '''
+1. Rigorously check LaTeX syntax, equation labels, and List of Equations registration (`\myequations`).
+2. Ensure strict adherence to style invariants: ZERO em dashes anywhere (use commas, parentheses, colons).
+3. Verify all mathematical formulations match the theoretical specifications in the ticket.
+4. Check that compilation reported 0 errors and 0 undefined citations.
+5. Verdict:
+   - If PASS: Output "[VERDICT: PASS]" followed by concise bullet points.
+   - If FAIL: Output "[VERDICT: FAIL]", explain precisely what failed, and provide the remediation ticket wrapped strictly between `NEXT_TICKET` and `END_NEXT_TICKET` tokens.
+'''
+
+[prompts.codes]
+role_description = "a senior quantitative software engineer and econometric QA lead"
+review_criteria = '''
+1. Verify that all implementation requirements and mathematical equations in the ticket are fulfilled.
+2. Scrutinize test rigor: confirm tests assert non-trivial edge cases, numerical tolerances, and invariants.
+3. Verify that test exit code is 0 with zero warnings.
+4. Verdict:
+   - If PASS: Output "[VERDICT: PASS]" followed by concise bullet points.
+   - If FAIL: Output "[VERDICT: FAIL]", detail specifically what failed, and provide the remediation ticket wrapped strictly between `NEXT_TICKET` and `END_NEXT_TICKET` tokens.
+'''

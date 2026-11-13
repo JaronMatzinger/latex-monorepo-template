@@ -12,6 +12,7 @@ A reproducible Dev Container setup for LaTeX reports and research monoliths.
   - `dev/literature/`: Literature notes and references
   - `dev/templates/`: Ticket template (`TICKET-template.md`)
   - `dev/scripts/`: Helper scripts (`review_ticket.py` verifies a finished ticket)
+  - `dev/config/`: Tool configuration (`review_ticket.toml` holds the review model, limits, and prompts used by `review_ticket.py`)
   - `dev/PROJECT_OVERVIEW.md`: Project architecture notes
 
 ## 1. Fork the Project on GitHub
@@ -46,3 +47,4 @@ Open the repository in VS Code and ensure the Dev Container is running:
   uv run dev/scripts/review_ticket.py <ticket-id>
   ```
   This requires `MISTRAL_API_KEY` in `.env` (see `.env.example`) and writes the review to `<ticket>.review.md` next to the ticket.
+- The review model (primary and fallback), request settings, and prompts live in `dev/config/review_ticket.toml`; point `REVIEW_TICKET_CONFIG` at another file to override.

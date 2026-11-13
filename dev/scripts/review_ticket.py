@@ -4,14 +4,20 @@
 # dependencies = [
 #     "mistralai",
 #     "python-dotenv",
+#     "tomli; python_version < '3.11'",
 # ]
 # ///
 import os
 import re
 import subprocess
 import sys
-import textwrap
 from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python < 3.11
+    import tomli as tomllib
+
 from dotenv import load_dotenv
 from mistralai.client import Mistral
 
@@ -22,6 +28,42 @@ for env_path in (_repo_root / ".env", _repo_root / "dev" / ".env"):
     load_dotenv(dotenv_path=env_path)
 # Fallback to local cwd .env if not found relative to script
 load_dotenv()
+
+
+DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "review_ticket.toml"
+
+
+def load_config() -> dict:
+    config_path = Path(os.environ.get("REVIEW_TICKET_CONFIG", DEFAULT_CONFIG_PATH))
+    if not config_path.exists():
+        print(f"Error: review config not found at {config_path}")
+        sys.exit(1)
+    with config_path.open("rb") as f:
+        return tomllib.load(f)
+
+
+def build_prompt(
+    cfg: dict,
+    is_doc: bool,
+    ticket_path: Path,
+    ticket_content: str,
+    invariants_context: str,
+    verification_section: str,
+    diff_payload: str,
+) -> str:
+    kind = "docs" if is_doc else "codes"
+    prompts = cfg["prompts"]
+    role_description = prompts[kind]["role_description"].strip()
+    review_criteria = prompts[kind]["review_criteria"].strip()
+    return prompts["template"].strip().format(
+        role_description=role_description,
+        invariants_context=invariants_context,
+        ticket_path=ticket_path,
+        ticket_content=ticket_content,
+        verification_section=verification_section,
+        diff_payload=diff_payload,
+        review_criteria=review_criteria,
+    )
 
 
 def run_cmd(cmd: list[str]) -> tuple[int, str]:
@@ -100,6 +142,7 @@ def main():
         print("Usage: uv run dev/scripts/review_ticket.py <ticket_id_or_path>")
         sys.exit(1)
 
+    cfg = load_config()
     ticket_path = resolve_ticket_path(sys.argv[1])
     is_doc = "docs" in ticket_path.parts or "DOC" in ticket_path.stem.upper()
 
@@ -120,7 +163,7 @@ def main():
     git_diff = get_git_diff()
     invariants_context = load_repository_invariants()
 
-    diff_char_limit = 50_000
+    diff_char_limit = int(cfg["limits"]["diff_char_limit"])
     if len(git_diff) > diff_char_limit:
         diff_payload = git_diff[:diff_char_limit] + "\n\n[WARNING: DIFF TRUNCATED DUE TO SIZE LIMIT]"
     else:
@@ -137,16 +180,6 @@ def main():
                 f"Exit Code: {code}\n"
                 f"```plaintext\n{compile_output[-4000:]}\n```\n"
             )
-        role_description = "an expert quantitative econometrician, technical editor, and thesis supervisor"
-        review_criteria = textwrap.dedent("""
-        1. Rigorously check LaTeX syntax, equation labels, and List of Equations registration (`\\myequations`).
-        2. Ensure strict adherence to style invariants: ZERO em dashes anywhere (use commas, parentheses, colons).
-        3. Verify all mathematical formulations match the theoretical specifications in the ticket.
-        4. Check that compilation reported 0 errors and 0 undefined citations.
-        5. Verdict:
-           - If PASS: Output "[VERDICT: PASS]" followed by concise bullet points.
-           - If FAIL: Output "[VERDICT: FAIL]", explain precisely what failed, and provide the remediation ticket wrapped strictly between `NEXT_TICKET` and `END_NEXT_TICKET` tokens.
-        """).strip()
     else:
         print("Running pytest test suite...")
         code, test_output = run_cmd(["uv", "run", "pytest", "-v", "-W", "error"])
@@ -163,52 +196,37 @@ def main():
             f"Exit Code: {code}\n"
             f"```plaintext\n{compact_test_output}\n```\n"
         )
-        role_description = "a senior quantitative software engineer and econometric QA lead"
-        review_criteria = textwrap.dedent("""
-        1. Verify that all implementation requirements and mathematical equations in the ticket are fulfilled.
-        2. Scrutinize test rigor: confirm tests assert non-trivial edge cases, numerical tolerances, and invariants.
-        3. Verify that test exit code is 0 with zero warnings.
-        4. Verdict:
-           - If PASS: Output "[VERDICT: PASS]" followed by concise bullet points.
-           - If FAIL: Output "[VERDICT: FAIL]", detail specifically what failed, and provide the remediation ticket wrapped strictly between `NEXT_TICKET` and `END_NEXT_TICKET` tokens.
-        """).strip()
 
-    prompt = textwrap.dedent(f"""
-    You are {role_description} evaluating an implementation artifact.
+    prompt = build_prompt(
+        cfg,
+        is_doc,
+        ticket_path,
+        ticket_content,
+        invariants_context,
+        verification_section,
+        diff_payload,
+    )
 
-    {invariants_context}
-
-    ### Target Ticket ({ticket_path})
-    {ticket_content}
-
-    ### Verification Execution
-    {verification_section}
-
-    ### Git Diff
-    ```diff
-    {diff_payload}
-    ```
-
-    ### Review Criteria:
-    {review_criteria}
-    """).strip()
-
-    model_name = "zai-glm-5-3"
+    model_cfg = cfg["model"]
+    model_name = model_cfg["primary"]
+    fallback_model = model_cfg.get("fallback", "codestral-latest")
+    temperature = float(model_cfg.get("temperature", 0.1))
+    timeout_ms = int(model_cfg.get("timeout_ms", 300_000))
     print(f"Submitting context for automated review using {model_name}...")
-    client = Mistral(api_key=api_key, timeout_ms=300_000)
+    client = Mistral(api_key=api_key, timeout_ms=timeout_ms)
 
     try:
         response = client.chat.complete(
             model=model_name,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.1,
+            temperature=temperature,
         )
     except Exception as e:
-        print(f"Request failed with {e}. Falling back to 'codestral-latest'...")
+        print(f"Request failed with {e}. Falling back to '{fallback_model}'...")
         response = client.chat.complete(
-            model="codestral-latest",
+            model=fallback_model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.1,
+            temperature=temperature,
         )
 
     review_text = response.choices[0].message.content
