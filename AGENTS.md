@@ -2,9 +2,9 @@
 
 ## 1. Active State & Current Handover
 - Active Mode: Coding
-- Current Ticket: DEV-01 (`README.md`, `AGENTS.md`, `dev/scripts/review_ticket.py`)
-- Immediate Next Action: Document the `dev/` layout in README.md and AGENTS.md; fix path references in `dev/scripts/review_ticket.py`
-- Last Completed: (none recorded yet)
+- Current Ticket: DEV-02 (`README.md`, `dev/scripts/review_ticket.py`)
+- Immediate Next Action: Restructure README into the fork / use-template / gitignore / writing-session / ticket-workflow flow; add `dev/literature` to the review script search paths
+- Last Completed: DEV-01 (dev/ layout documented in README.md and AGENTS.md, review script paths fixed, commit 06d4c34)
 - Immediate Verification: `uv run dev/scripts/review_ticket.py <ticket-id>` at the end of each ticket
 - Ticket Location: `dev/tickets/codes/` (engineering) and `dev/tickets/docs/` (report), created from `dev/templates/TICKET-template.md`
 - Project Overview: `dev/PROJECT_OVERVIEW.md`
